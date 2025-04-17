@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+sqlalchemy
+requests
+pydantic
+alembic
+pytest
+pytest-asyncio
+coverage
+pymysql
