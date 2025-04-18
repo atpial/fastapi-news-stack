@@ -9,3 +9,6 @@ pytest
 pytest-asyncio
 coverage
 pymysql
+pydantic-settings
+python-multipart
+python-jose[cryptography]
