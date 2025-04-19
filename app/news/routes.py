@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query, status, HTTPException
 from app.auth.security import verify_token
 from app.config import settings
 from app.global_utils import get_response
-from app.constants import NEWS_API_URL_EVERYTHING
+from app.constants import NEWS_API_URL_EVERYTHING, NEWS_API_TOP_HEADLINES
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import News
@@ -65,9 +65,6 @@ def get_news(
             error=True,
             code="UNEXPECTED_ERROR",
         )
-
-
-# router = APIRouter()
 
 
 @router.post("/save-latest")
@@ -135,6 +132,85 @@ def save_latest_news(db: Session = Depends(get_db)):
         )
     except Exception as e:
         db.rollback()
+        return get_response(
+            message="An unexpected error occurred",
+            status=status.HTTP_400_BAD_REQUEST,
+            error=True,
+            code="UNEXPECTED_ERROR",
+        )
+
+
+@router.get("/all")
+def get_all_news(page: int = 1, page_size: int = 10, db: Session = Depends(get_db)):
+    try:
+        offset = (page - 1) * page_size
+        total = db.query(News).count()
+        news_list = (
+            db.query(News)
+            .order_by(News.published_at.desc())
+            .offset(offset)
+            .limit(page_size)
+            .all()
+        )
+
+        return get_response(
+            message="Fetched news articles successfully",
+            status=status.HTTP_200_OK,
+            error=False,
+            code="ALL_NEWS_FETCHED",
+            data={
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+                "articles": [
+                    {
+                        "id": news.id,
+                        "title": news.title,
+                        "description": news.description,
+                        "url": news.url,
+                        "published_at": news.published_at.isoformat(),
+                    }
+                    for news in news_list
+                ],
+            },
+        )
+    except Exception as e:
+        return get_response(
+            message="An unexpected error occurred",
+            status=status.HTTP_400_BAD_REQUEST,
+            error=True,
+            code="UNEXPECTED_ERROR",
+        )
+
+
+@router.get("/headlines/country/{country_code}")
+def get_headlines_by_country(country_code: str, db: Session = Depends(get_db)):
+    """
+    Get news articles from the News API.
+    """
+    params = {
+        "country": country_code.lower(),
+        "apiKey": settings.API_KEY,
+    }
+
+    try:
+        response = requests.get(NEWS_API_TOP_HEADLINES, params=params)
+        response.raise_for_status()
+        return get_response(
+            data=response.json(),
+            message=f"Top headlines for country: {country_code.lower()}",
+            status=status.HTTP_200_OK,
+            error=False,
+            code="TOP_HEADLINES_FETCHED",
+        )
+    except requests.exceptions.RequestException as e:
+        return get_response(
+            message="Failed to fetch news articles",
+            status=status.HTTP_400_BAD_REQUEST,
+            error=True,
+            code="HEADLINES_FETCH_FAILED",
+        )
+    except Exception as e:
         return get_response(
             message="An unexpected error occurred",
             status=status.HTTP_400_BAD_REQUEST,

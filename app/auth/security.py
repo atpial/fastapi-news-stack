@@ -10,7 +10,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 def verify_token(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        print(f"Decoded payload: {payload}")
         return get_response(
             data=payload,
             message="Token verified successfully",
