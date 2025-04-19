@@ -1,25 +1,28 @@
-from fastapi import APIRouter, HTTPException, status, Depends, Form
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, HTTPException, status
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from app.config import settings
 from app.constants import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_TOKEN_TYPE, JWT_ALGORITHM
 from app.global_utils import get_response
+from app.auth.schemas import TokenRequest
 
 router = APIRouter()
 
 
 @router.post("/token")
-def get_token(client_id: str = Form(...), client_secret: str = Form(...)):
+def get_token(payload: TokenRequest):
     try:
-        if client_id != settings.CLIENT_ID or client_secret != settings.CLIENT_SECRET:
+        if (
+            payload.client_id != settings.CLIENT_ID
+            or payload.client_secret != settings.CLIENT_SECRET
+        ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid client credentials",
             )
 
         to_encode = {
-            "sub": client_id,
+            "sub": payload.client_id,
             "exp": datetime.now(timezone.utc)
             + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
         }

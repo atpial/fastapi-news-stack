@@ -176,7 +176,7 @@ def get_all_news(page: int = 1, page_size: int = 10, db: Session = Depends(get_d
         )
     except Exception as e:
         return get_response(
-            message="An unexpected error occurred",
+            message=f"An unexpected error occurred: {str(e)}",
             status=status.HTTP_400_BAD_REQUEST,
             error=True,
             code="UNEXPECTED_ERROR",
