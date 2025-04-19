@@ -217,3 +217,39 @@ def get_headlines_by_country(country_code: str, db: Session = Depends(get_db)):
             error=True,
             code="UNEXPECTED_ERROR",
         )
+
+
+@router.get("/headlines/source/{source_id}")
+def get_headlines_by_source(source_id: str, db: Session = Depends(get_db)):
+    """
+    Get news articles from the News API.
+    """
+    params = {
+        "sources": source_id.lower(),
+        "apiKey": settings.API_KEY,
+    }
+
+    try:
+        response = requests.get(NEWS_API_TOP_HEADLINES, params=params)
+        response.raise_for_status()
+        return get_response(
+            data=response.json(),
+            message=f"Top headlines for source: {source_id.lower()}",
+            status=status.HTTP_200_OK,
+            error=False,
+            code="TOP_HEADLINES_FETCHED",
+        )
+    except requests.exceptions.RequestException as e:
+        return get_response(
+            message="Failed to fetch news articles",
+            status=status.HTTP_400_BAD_REQUEST,
+            error=True,
+            code="HEADLINES_FETCH_FAILED",
+        )
+    except Exception as e:
+        return get_response(
+            message="An unexpected error occurred",
+            status=status.HTTP_400_BAD_REQUEST,
+            error=True,
+            code="UNEXPECTED_ERROR",
+        )
