@@ -12,3 +12,4 @@ pymysql
 pydantic-settings
 python-multipart
 python-jose[cryptography]
+PyJWT

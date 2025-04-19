@@ -1,4 +1,3 @@
-# app/auth/routes.py
 from fastapi import APIRouter, HTTPException, status, Depends, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
@@ -35,7 +34,6 @@ def get_token(client_id: str = Form(...), client_secret: str = Form(...)):
         raise e
     except JWTError as e:
         return get_response(
-            data={},
             message="Token generation failed",
             status=status.HTTP_400_BAD_REQUEST,
             error=True,
@@ -43,7 +41,6 @@ def get_token(client_id: str = Form(...), client_secret: str = Form(...)):
         )
     except Exception as e:
         return get_response(
-            data={},
             message="An unexpected error occurred",
             status=status.HTTP_400_BAD_REQUEST,
             error=True,
