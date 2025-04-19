@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Form
 from fastapi.security import OAuth2PasswordRequestForm
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from app.config import settings
 from app.constants import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_TOKEN_TYPE, JWT_ALGORITHM
@@ -20,7 +20,8 @@ def get_token(client_id: str = Form(...), client_secret: str = Form(...)):
 
         to_encode = {
             "sub": client_id,
-            "exp": datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+            "exp": datetime.now(timezone.utc)
+            + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
         }
         token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=JWT_ALGORITHM)
         return get_response(
