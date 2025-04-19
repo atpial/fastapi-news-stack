@@ -1,11 +1,15 @@
 # app/news/routes.py
 import requests
-from datetime import date
-from fastapi import APIRouter, Depends, Query, status
+from datetime import date, datetime
+from fastapi import APIRouter, Depends, Query, status, HTTPException
 from app.auth.security import verify_token
 from app.config import settings
 from app.global_utils import get_response
 from app.constants import NEWS_API_URL_EVERYTHING
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.models import News
+from sqlalchemy.exc import SQLAlchemyError
 
 
 router = APIRouter(prefix="/news", dependencies=[Depends(verify_token)])
@@ -56,6 +60,82 @@ def get_news(
     except Exception as e:
         return get_response(
             data={},
+            message="An unexpected error occurred",
+            status=status.HTTP_400_BAD_REQUEST,
+            error=True,
+            code="UNEXPECTED_ERROR",
+        )
+
+
+# router = APIRouter()
+
+
+@router.post("/save-latest")
+def save_latest_news(db: Session = Depends(get_db)):
+    url = NEWS_API_URL_EVERYTHING
+    params = {
+        "q": "apple",
+        "sortBy": "publishedAt",
+        "pageSize": 3,  # Only fetch top 3
+        "apiKey": settings.API_KEY,
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        articles = response.json().get("articles", [])[:3]
+
+        if not articles:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="No articles found"
+            )
+
+        saved_articles = []
+
+        with db.begin():
+            for article in articles:
+                existing = db.query(News).filter(News.url == article["url"]).first()
+                if existing:
+                    continue
+                news = News(
+                    title=article.get("title"),
+                    description=article.get("description"),
+                    url=article.get("url"),
+                    published_at=datetime.fromisoformat(
+                        article.get("publishedAt").replace("Z", "+00:00")
+                    ),
+                )
+                db.add(news)
+                saved_articles.append(news)
+
+        return get_response(
+            message="Top 3 articles saved successfully",
+            status=status.HTTP_200_OK,
+            error=False,
+            code="ARTICLES_SAVED",
+            data=[
+                {
+                    "title": a.title,
+                    "url": a.url,
+                    "published_at": a.published_at.isoformat(),
+                }
+                for a in saved_articles
+            ],
+        )
+
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=400, detail="Failed to fetch news")
+    except SQLAlchemyError as e:
+        db.rollback()
+        return get_response(
+            message="Database error occurred",
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error=True,
+            code="DB_ERROR",
+        )
+    except Exception as e:
+        db.rollback()
+        return get_response(
             message="An unexpected error occurred",
             status=status.HTTP_400_BAD_REQUEST,
             error=True,
