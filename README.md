@@ -90,7 +90,7 @@ docker build -t fastapi-news .
 ```bash
 docker run --env-file .env -p 8000:8000 fastapi-news
 ```
-make sure `DATABASE_HOST=host.docker.internal` is set in `.env`
+make sure `DATABASE_HOST_DOCKER=host.docker.internal` is set in `.env`
 
 ## Run All Tests
 Make sure you're in the project root and have the test dependencies installed:
