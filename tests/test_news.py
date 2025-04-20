@@ -4,7 +4,9 @@ import requests
 from app.main import app
 from app.database import get_db
 from app.models import News
-from datetime import datetime
+from datetime import timedelta, datetime, timezone
+from jose import jwt
+from app.config import settings
 
 
 def get_token(client):
@@ -314,11 +316,6 @@ def test_get_headlines_filter_unexpected_error(mock_get, client):
     assert body["error"] is True
     assert body["message"] == "An unexpected error occurred"
     assert body["code"] == "UNEXPECTED_ERROR"
-
-
-from datetime import timedelta, datetime, timezone
-from jose import jwt
-from app.config import settings
 
 
 def create_token(exp_delta_minutes=15):

@@ -64,7 +64,7 @@ def update_env(client_id, client_secret, secret_key):
     set_key(env_file, "CLIENT_SECRET", client_secret)
     set_key(env_file, "SECRET_KEY", secret_key)
 
-    print(f".env file updated with the new keys.")
+    print(".env file updated with the new keys.")
 
 
 def main():

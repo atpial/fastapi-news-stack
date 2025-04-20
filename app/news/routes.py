@@ -268,7 +268,7 @@ def get_headlines_by_source(source_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/headlines/filter")
-def get_headlines_by_source(source: str, country: str):
+def get_headlines_filter(source: str, country: str):
     """
     Get news articles from the News API.
     """

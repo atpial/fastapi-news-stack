@@ -1,7 +1,4 @@
-import pytest
-from unittest.mock import patch
-from app.main import app  # update based on your project structure
-from app.config import settings  # update if needed
+from app.config import settings
 
 
 def test_token_generation_success(client):
