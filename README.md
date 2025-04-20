@@ -20,8 +20,8 @@ fastapi-news-stack is a backend service that authenticates clients using the OAu
 
 - Clone the Repository
 ```bash
-git clone https://github.com/your-username/fastapi-news-api.git
-cd fastapi-news-api
+git clone https://github.com/atpial/fastapi-news-stack.git
+cd fastapi-news-stack
 ```
 
 - Create and Activate a Virtual Environment (For Local Dev)
@@ -116,8 +116,8 @@ Use the `/token` endpoint to generate an access token using your `CLIENT_ID` and
 use `Postman` or `curl` to invoke the api. For postman use the following as body:
 ```bash
 {
-  "client_id": "string",
-  "client_secret": "string"
+  "client_id": "your_client_id",
+  "client_secret": "your_client_secret"
 }
 ```
 For curl, use the following command:
@@ -140,18 +140,36 @@ To access secured routes like /news, include the token in the Authorization head
 
 **Request**
 ```bash
-curl -X GET http://localhost:8000/news \
+curl -X GET http://localhost:8000/news?from=2025-04-16&to=2025-04-16&page=1&page_size=10 \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 **Response**
 ```json
 {
-  "data": [...],
-  "message": "News fetched successfully",
-  "status": 200,
-  "error": false,
-  "code": "SUCCESS"
+    "message": "News articles fetched successfully",
+    "error": false,
+    "code": "NEWS_FETCHED",
+    "data": {
+        "status": "ok",
+        "totalResults": 1642,
+        "articles": [
+            {
+                "source": {
+                    "id": null,
+                    "name": "MacRumors"
+                },
+                "author": "Joe Rossignol",
+                "title": "Apple to Enable a Lesser-Known iOS 16 Feature on iPhone Demo Units",
+                "description": "In its 2025 Environmental Progress Report released today, Apple revealed that it plans to expand its Clean Energy Charging feature to iPhone and iPad demo units on display at Apple Stores and other retail stores across the United States.\n\n\n\n\n\nIntroduced in th…",
+                "url": "https://www.macrumors.com/2025/04/16/demo-iphones-ipads-clean-energy-charging/",
+                "urlToImage": "https://images.macrumors.com/t/G87q6Sdfxb-VKyDAmgaltn2wINI=/1600x/article-new/2025/01/iPhone-16-Apple-Store-Levels.jpg",
+                "publishedAt": "2025-04-16T19:56:13Z",
+                "content": "In its 2025 Environmental Progress Report released today, Apple revealed that it plans to expand its Clean Energy Charging feature to iPhone and iPad demo units on display at Apple Stores and other r… [+1339 chars]"
+            },
+            ...
+        ]
+    }
 }
 ```
 
