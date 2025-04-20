@@ -1,0 +1,280 @@
+{
+	"info": {
+		"_postman_id": "6ab772db-88fa-4455-93dd-57f679e827df",
+		"name": "News stack",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18153448",
+		"_collection_link": "https://dark-eclipse-324954.postman.co/workspace/Personal~06ea2a10-1f53-440c-ac76-1fdae45c17f4/collection/18153448-6ab772db-88fa-4455-93dd-57f679e827df?action=share&source=collection_link&creator=18153448"
+	},
+	"item": [
+		{
+			"name": "get all news",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJibG9ja3N0YWtfY2xpZW50IiwiZXhwIjoxNzQ1MDE0MDkxfQ._6tnjRYC3wEEcFcE5bqMNFB53wlDIq1kVwQ4CFAuruc",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:8000/news/?from=2025-04-16&to=2025-04-16&q=apple&page=2&page_size=10",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"news",
+						""
+					],
+					"query": [
+						{
+							"key": "from",
+							"value": "2025-04-16"
+						},
+						{
+							"key": "to",
+							"value": "2025-04-16"
+						},
+						{
+							"key": "q",
+							"value": "apple"
+						},
+						{
+							"key": "page",
+							"value": "2"
+						},
+						{
+							"key": "page_size",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get all news local",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJibG9ja3N0YWtfY2xpZW50IiwiZXhwIjoxNzQ1MDkyMTcyfQ.UXG7tb8USs6_TodpXB-k3U7l_RsOVYGecbgk_iR2ilo",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:8000/news/all?page=1&page_size=10",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"news",
+						"all"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "page_size",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get headlines by country",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJibG9ja3N0YWtfY2xpZW50IiwiZXhwIjoxNzQ1MDk1MjcxfQ.NwK742aCfm8suKjLy8z8xEFdUWs5tZQflNZ5wItajjU",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:8000/news/headlines/country/:country_code",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"news",
+						"headlines",
+						"country",
+						":country_code"
+					],
+					"variable": [
+						{
+							"key": "country_code",
+							"value": "us"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get headlines by source",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJibG9ja3N0YWtfY2xpZW50IiwiZXhwIjoxNzQ1MDk1MjcxfQ.NwK742aCfm8suKjLy8z8xEFdUWs5tZQflNZ5wItajjU",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:8000/news/headlines/source/:source_id",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"news",
+						"headlines",
+						"source",
+						":source_id"
+					],
+					"variable": [
+						{
+							"key": "source_id",
+							"value": "CNN"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "headlines filter",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJibG9ja3N0YWtfY2xpZW50IiwiZXhwIjoxNzQ1MTE3OTQ0fQ.pigQEfcSO6StDfUo1h5bc-wf5-JWmsZTJMlaUdmex2w",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:8000/news/headlines/filter?country=us&source=techcrunch",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"news",
+						"headlines",
+						"filter"
+					],
+					"query": [
+						{
+							"key": "country",
+							"value": "us"
+						},
+						{
+							"key": "source",
+							"value": "techcrunch"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get tokens",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"client_id\": \"blockstak_client\",\n    \"client_secret\": \"supersecret\" \n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:8000/token",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"token"
+					],
+					"query": [
+						{
+							"key": "cliend_id",
+							"value": "blockstak_client",
+							"disabled": true
+						},
+						{
+							"key": "client_secret",
+							"value": "supersecret",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "save latest news",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJibG9ja3N0YWtfY2xpZW50IiwiZXhwIjoxNzQ1MDk0MzQ1fQ.mPoC5JA85_dJ980vBliGjNQwtAkQjpIZWsDfl_29_X8",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:8000/news/save-latest",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"news",
+						"save-latest"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
