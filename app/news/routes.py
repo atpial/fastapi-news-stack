@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import News
 from sqlalchemy.exc import SQLAlchemyError
+from app.logger import logger
 
 
 router = APIRouter(prefix="/news", dependencies=[Depends(verify_token)])
@@ -50,6 +51,7 @@ def get_news(
             code="NEWS_FETCHED",
         )
     except requests.exceptions.RequestException as e:
+        logger.error(f"RequestException: {str(e)}")
         return get_response(
             data={},
             message="Failed to fetch news articles",
@@ -58,6 +60,7 @@ def get_news(
             code="NEWS_FETCH_FAILED",
         )
     except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
         return get_response(
             data={},
             message="An unexpected error occurred",
@@ -83,6 +86,7 @@ def save_latest_news(db: Session = Depends(get_db)):
         articles = response.json().get("articles", [])[:3]
 
         if not articles:
+            logger.error("No articles found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="No articles found"
             )
@@ -121,8 +125,10 @@ def save_latest_news(db: Session = Depends(get_db)):
         )
 
     except requests.exceptions.RequestException as e:
+        logger.error(f"RequestException: {str(e)}")
         raise HTTPException(status_code=400, detail="Failed to fetch news")
     except SQLAlchemyError as e:
+        logger.error(f"SQLAlchemyError: {str(e)}")
         db.rollback()
         return get_response(
             message="Database error occurred",
@@ -131,6 +137,7 @@ def save_latest_news(db: Session = Depends(get_db)):
             code="DB_ERROR",
         )
     except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
         db.rollback()
         return get_response(
             message="An unexpected error occurred",
@@ -175,6 +182,7 @@ def get_all_news(page: int = 1, page_size: int = 10, db: Session = Depends(get_d
             },
         )
     except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
         return get_response(
             message=f"An unexpected error occurred: {str(e)}",
             status=status.HTTP_400_BAD_REQUEST,
@@ -204,6 +212,7 @@ def get_headlines_by_country(country_code: str, db: Session = Depends(get_db)):
             code="TOP_HEADLINES_FETCHED",
         )
     except requests.exceptions.RequestException as e:
+        logger.error(f"RequestException: {str(e)}")
         return get_response(
             message="Failed to fetch news articles",
             status=status.HTTP_400_BAD_REQUEST,
@@ -211,6 +220,7 @@ def get_headlines_by_country(country_code: str, db: Session = Depends(get_db)):
             code="HEADLINES_FETCH_FAILED",
         )
     except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
         return get_response(
             message="An unexpected error occurred",
             status=status.HTTP_400_BAD_REQUEST,
@@ -240,6 +250,7 @@ def get_headlines_by_source(source_id: str, db: Session = Depends(get_db)):
             code="TOP_HEADLINES_FETCHED",
         )
     except requests.exceptions.RequestException as e:
+        logger.error(f"RequestException: {str(e)}")
         return get_response(
             message="Failed to fetch news articles",
             status=status.HTTP_400_BAD_REQUEST,
@@ -247,6 +258,7 @@ def get_headlines_by_source(source_id: str, db: Session = Depends(get_db)):
             code="HEADLINES_FETCH_FAILED",
         )
     except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
         return get_response(
             message="An unexpected error occurred",
             status=status.HTTP_400_BAD_REQUEST,
@@ -277,6 +289,7 @@ def get_headlines_by_source(source: str, country: str):
             code="TOP_HEADLINES_FETCHED",
         )
     except requests.exceptions.RequestException as e:
+        logger.error(f"RequestException: {str(e)}")
         return get_response(
             message="Failed to fetch news articles",
             status=status.HTTP_400_BAD_REQUEST,
@@ -284,6 +297,7 @@ def get_headlines_by_source(source: str, country: str):
             code="HEADLINES_FETCH_FAILED",
         )
     except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
         return get_response(
             message="An unexpected error occurred",
             status=status.HTTP_400_BAD_REQUEST,

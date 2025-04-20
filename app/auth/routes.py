@@ -5,6 +5,7 @@ from app.config import settings
 from app.constants import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_TOKEN_TYPE, JWT_ALGORITHM
 from app.global_utils import get_response
 from app.auth.schemas import TokenRequest
+from app.logger import logger
 
 router = APIRouter()
 
@@ -16,6 +17,7 @@ def get_token(payload: TokenRequest):
             payload.client_id != settings.CLIENT_ID
             or payload.client_secret != settings.CLIENT_SECRET
         ):
+            logger.error("Invalid client credentials")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid client credentials",
@@ -27,6 +29,7 @@ def get_token(payload: TokenRequest):
             + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
         }
         token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=JWT_ALGORITHM)
+        logger.info("Token generated successfully")
         return get_response(
             data={"access_token": token, "token_type": JWT_TOKEN_TYPE},
             message="Token generated successfully",
@@ -35,8 +38,10 @@ def get_token(payload: TokenRequest):
             code="TOKEN_GENERATED",
         )
     except HTTPException as e:
+        logger.error(f"HTTPException: {str(e)}")
         raise e
     except JWTError as e:
+        logger.error(f"JWTError: {str(e)}")
         return get_response(
             message="Token generation failed",
             status=status.HTTP_400_BAD_REQUEST,
@@ -44,6 +49,7 @@ def get_token(payload: TokenRequest):
             code="TOKEN_GENERATION_FAILED",
         )
     except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
         return get_response(
             message="An unexpected error occurred",
             status=status.HTTP_400_BAD_REQUEST,
