@@ -16,3 +16,4 @@ PyJWT
 httpx
 mysql-connector-python
 flake8
+aiohttp
