@@ -1,6 +1,7 @@
 import pytest
-from unittest.mock import MagicMock, patch
-import requests
+from unittest.mock import MagicMock, patch, AsyncMock
+import aiohttp # Added for ClientError
+import requests # Keep for other tests if any, or remove if not used elsewhere.
 from app.main import app
 from app.database import get_db
 from app.models import News
@@ -33,6 +34,7 @@ def test_save_latest_news(client, cleanup_db):
     assert all("title" in a and "url" in a for a in body["data"])
 
 
+# Removed @pytest.mark.asyncio as TestClient handles async routes.
 @pytest.fixture
 def mock_db_session():
     # Mock the DB session for testing
@@ -98,9 +100,8 @@ def test_get_all_news(client, mock_db_session, cleanup_db):
         assert "published_at" in article
 
 
-@patch("requests.get")
-def test_get_headlines_by_country(mock_get, client):
-    # Sample data returned by the mock API call
+@patch("app.news.routes.aiohttp.ClientSession.get", new_callable=AsyncMock)
+def test_get_headlines_by_country(mock_aiohttp_get, client):
     token = get_token(client)
     mock_data = {
         "status": "ok",
@@ -125,16 +126,22 @@ def test_get_headlines_by_country(mock_get, client):
         ],
     }
 
-    # Configure the mock response
-    mock_get.return_value.status_code = 200
-    mock_get.return_value.json.return_value = mock_data
+    # Configure the mock for aiohttp.ClientSession.get
+    mock_response = MagicMock()
+    mock_response.status = 200
+    mock_response.json = AsyncMock(return_value=mock_data)
+    mock_response.raise_for_status = MagicMock()
 
-    # Send the GET request to the API
+    # mock_aiohttp_get is the mock for session.get()
+    # it needs to return an async context manager
+    async_context_manager_mock = AsyncMock()
+    async_context_manager_mock.__aenter__.return_value = mock_response
+    mock_aiohttp_get.return_value = async_context_manager_mock
+
     response = client.get(
         "news/headlines/country/us", headers={"Authorization": f"Bearer {token}"}
     )
 
-    # Assertions
     assert response.status_code == 200
     body = response.json()
 
@@ -154,21 +161,25 @@ def test_get_headlines_by_country(mock_get, client):
     assert body["data"]["articles"][1]["title"] == "Headline 2"
 
 
-@patch("requests.get")
-def test_get_headlines_by_country_error(mock_get, client):
-    # Mocking an error response from the News API
-    mock_get.return_value.status_code = 500
-    mock_get.return_value.raise_for_status.side_effect = (
-        requests.exceptions.RequestException("API error")
-    )
+@patch("app.news.routes.aiohttp.ClientSession.get", new_callable=AsyncMock)
+def test_get_headlines_by_country_error(mock_aiohttp_get, client):
+    # Configure the mock for aiohttp.ClientSession.get to raise an error
+    mock_response = MagicMock()
+    mock_response.status = 500  # Or any other error status
+    mock_response.raise_for_status = MagicMock(side_effect=aiohttp.ClientError("API error"))
+    # If json() might be called before raise_for_status in some code paths, mock it too
+    mock_response.json = AsyncMock(return_value={"error": "API error"})
 
-    # Send the GET request to the API
+
+    async_context_manager_mock = AsyncMock()
+    async_context_manager_mock.__aenter__.return_value = mock_response
+    mock_aiohttp_get.return_value = async_context_manager_mock
+    
     response = client.get(
         "news/headlines/country/us",
         headers={"Authorization": f"Bearer {get_token(client)}"},
     )
 
-    # Assertions
     assert response.status_code == 400
     body = response.json()
     assert body["message"] == "Failed to fetch news articles"
@@ -176,8 +187,8 @@ def test_get_headlines_by_country_error(mock_get, client):
     assert body["code"] == "HEADLINES_FETCH_FAILED"
 
 
-@patch("requests.get")
-def test_get_headlines_by_source_success(mock_get, client):
+@patch("app.news.routes.aiohttp.ClientSession.get", new_callable=AsyncMock) #Patched for aiohttp
+def test_get_headlines_by_source_success(mock_aiohttp_get, client): #mock_get renamed
     token = get_token(client)
     mock_response_data = {
         "status": "ok",
@@ -202,8 +213,16 @@ def test_get_headlines_by_source_success(mock_get, client):
         ],
     }
 
-    mock_get.return_value.status_code = 200
-    mock_get.return_value.json.return_value = mock_response_data
+    # Configure the mock for aiohttp.ClientSession.get
+    mock_response = MagicMock()
+    mock_response.status = 200
+    mock_response.json = AsyncMock(return_value=mock_response_data)
+    mock_response.raise_for_status = MagicMock()
+
+    async_context_manager_mock = AsyncMock()
+    async_context_manager_mock.__aenter__.return_value = mock_response
+    mock_aiohttp_get.return_value = async_context_manager_mock
+
 
     response = client.get(
         "news/headlines/source/bbc-news", headers={"Authorization": f"Bearer {token}"}
@@ -219,9 +238,18 @@ def test_get_headlines_by_source_success(mock_get, client):
     assert body["data"]["articles"][0]["title"] == "Sample Headline 1"
 
 
-@patch("requests.get")
-def test_get_headlines_by_source_api_failure(mock_get, client):
-    mock_get.side_effect = requests.exceptions.RequestException("API error")
+@patch("app.news.routes.aiohttp.ClientSession.get", new_callable=AsyncMock) #Patched for aiohttp
+def test_get_headlines_by_source_api_failure(mock_aiohttp_get, client): #mock_get renamed
+    # Configure the mock for aiohttp.ClientSession.get to raise an error
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock(side_effect=aiohttp.ClientError("API error"))
+    # If json() might be called before raise_for_status in some code paths, mock it too
+    mock_response.json = AsyncMock(return_value={"error": "API error"})
+
+
+    async_context_manager_mock = AsyncMock()
+    async_context_manager_mock.__aenter__.return_value = mock_response
+    mock_aiohttp_get.return_value = async_context_manager_mock
 
     response = client.get(
         "news/headlines/source/bbc-news",
@@ -235,9 +263,10 @@ def test_get_headlines_by_source_api_failure(mock_get, client):
     assert body["code"] == "HEADLINES_FETCH_FAILED"
 
 
-@patch("requests.get")
-def test_get_headlines_by_source_exception(mock_get, client):
-    mock_get.side_effect = Exception("Some unexpected error")
+@patch("app.news.routes.aiohttp.ClientSession.get", new_callable=AsyncMock) #Patched for aiohttp
+def test_get_headlines_by_source_exception(mock_aiohttp_get, client): #mock_get renamed
+    # To simulate a generic Exception not caught by aiohttp.ClientError
+    mock_aiohttp_get.side_effect = Exception("Some unexpected error")
 
     response = client.get(
         "news/headlines/source/bbc-news",
@@ -251,8 +280,8 @@ def test_get_headlines_by_source_exception(mock_get, client):
     assert body["code"] == "UNEXPECTED_ERROR"
 
 
-@patch("requests.get")
-def test_get_headlines_filter_success(mock_get, client):
+@patch("app.news.routes.aiohttp.ClientSession.get", new_callable=AsyncMock) #Patched for aiohttp
+def test_get_headlines_filter_success(mock_aiohttp_get, client): #mock_get renamed
     mock_response_data = {
         "status": "ok",
         "totalResults": 1,
@@ -268,8 +297,15 @@ def test_get_headlines_filter_success(mock_get, client):
         ],
     }
 
-    mock_get.return_value.status_code = 200
-    mock_get.return_value.json.return_value = mock_response_data
+    # Configure the mock for aiohttp.ClientSession.get
+    mock_response = MagicMock()
+    mock_response.status = 200
+    mock_response.json = AsyncMock(return_value=mock_response_data)
+    mock_response.raise_for_status = MagicMock()
+
+    async_context_manager_mock = AsyncMock()
+    async_context_manager_mock.__aenter__.return_value = mock_response
+    mock_aiohttp_get.return_value = async_context_manager_mock
 
     response = client.get(
         "news/headlines/filter?source=bbc-news&country=us",
@@ -286,9 +322,16 @@ def test_get_headlines_filter_success(mock_get, client):
     assert "us" in body["message"]
 
 
-@patch("requests.get")
-def test_get_headlines_filter_api_error(mock_get, client):
-    mock_get.side_effect = requests.exceptions.RequestException("Timeout")
+@patch("app.news.routes.aiohttp.ClientSession.get", new_callable=AsyncMock) #Patched for aiohttp
+def test_get_headlines_filter_api_error(mock_aiohttp_get, client): #mock_get renamed
+    # Configure the mock for aiohttp.ClientSession.get to raise an error
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock(side_effect=aiohttp.ClientError("Timeout"))
+    mock_response.json = AsyncMock(return_value={"error": "Timeout"}) # Mock json if needed
+
+    async_context_manager_mock = AsyncMock()
+    async_context_manager_mock.__aenter__.return_value = mock_response
+    mock_aiohttp_get.return_value = async_context_manager_mock
 
     response = client.get(
         "news/headlines/filter?source=bbc-news&country=us",
@@ -302,9 +345,10 @@ def test_get_headlines_filter_api_error(mock_get, client):
     assert body["code"] == "HEADLINES_FETCH_FAILED"
 
 
-@patch("requests.get")
-def test_get_headlines_filter_unexpected_error(mock_get, client):
-    mock_get.side_effect = Exception("Boom")
+@patch("app.news.routes.aiohttp.ClientSession.get", new_callable=AsyncMock) #Patched for aiohttp
+def test_get_headlines_filter_unexpected_error(mock_aiohttp_get, client): #mock_get renamed
+    # To simulate a generic Exception not caught by aiohttp.ClientError
+    mock_aiohttp_get.side_effect = Exception("Boom")
 
     response = client.get(
         "news/headlines/filter?source=bbc-news&country=us",

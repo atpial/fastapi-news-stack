@@ -1,5 +1,5 @@
 # app/news/routes.py
-import requests
+import aiohttp
 from datetime import date, datetime
 from fastapi import APIRouter, Depends, Query, status, HTTPException
 from app.auth.security import verify_token
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/news", dependencies=[Depends(verify_token)])
 
 
 @router.get("/")
-def get_news(
+async def get_news(
     q: str = Query(default="apple", description="Search term for the news"),
     page=None,
     page_size=None,
@@ -41,17 +41,19 @@ def get_news(
         params["pageSize"] = int(page_size)
 
     try:
-        response = requests.get(NEWS_API_URL_EVERYTHING, params=params)
-        response.raise_for_status()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(NEWS_API_URL_EVERYTHING, params=params) as response:
+                response.raise_for_status()
+                data = await response.json()
         return get_response(
-            data=response.json(),
+            data=data,
             message="News articles fetched successfully",
             status=status.HTTP_200_OK,
             error=False,
             code="NEWS_FETCHED",
         )
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
+    except aiohttp.ClientError as e:
+        logger.error(f"ClientError: {str(e)}")
         return get_response(
             data={},
             message="Failed to fetch news articles",
@@ -71,7 +73,7 @@ def get_news(
 
 
 @router.post("/save-latest")
-def save_latest_news(db: Session = Depends(get_db)):
+async def save_latest_news(db: Session = Depends(get_db)):
     url = NEWS_API_URL_EVERYTHING
     params = {
         "q": "apple",
@@ -81,9 +83,11 @@ def save_latest_news(db: Session = Depends(get_db)):
     }
 
     try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        articles = response.json().get("articles", [])[:3]
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as response:
+                response.raise_for_status()
+                articles_data = await response.json()
+        articles = articles_data.get("articles", [])[:3]
 
         if not articles:
             logger.error("No articles found")
@@ -124,8 +128,8 @@ def save_latest_news(db: Session = Depends(get_db)):
             ],
         )
 
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
+    except aiohttp.ClientError as e:
+        logger.error(f"ClientError: {str(e)}")
         raise HTTPException(status_code=400, detail="Failed to fetch news")
     except SQLAlchemyError as e:
         logger.error(f"SQLAlchemyError: {str(e)}")
@@ -192,7 +196,7 @@ def get_all_news(page: int = 1, page_size: int = 10, db: Session = Depends(get_d
 
 
 @router.get("/headlines/country/{country_code}")
-def get_headlines_by_country(country_code: str, db: Session = Depends(get_db)):
+async def get_headlines_by_country(country_code: str, db: Session = Depends(get_db)):
     """
     Get news articles from the News API.
     """
@@ -202,17 +206,19 @@ def get_headlines_by_country(country_code: str, db: Session = Depends(get_db)):
     }
 
     try:
-        response = requests.get(NEWS_API_TOP_HEADLINES, params=params)
-        response.raise_for_status()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(NEWS_API_TOP_HEADLINES, params=params) as response:
+                response.raise_for_status()
+                data = await response.json()
         return get_response(
-            data=response.json(),
+            data=data,
             message=f"Top headlines for country: {country_code.lower()}",
             status=status.HTTP_200_OK,
             error=False,
             code="TOP_HEADLINES_FETCHED",
         )
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
+    except aiohttp.ClientError as e:
+        logger.error(f"ClientError: {str(e)}")
         return get_response(
             message="Failed to fetch news articles",
             status=status.HTTP_400_BAD_REQUEST,
@@ -230,7 +236,7 @@ def get_headlines_by_country(country_code: str, db: Session = Depends(get_db)):
 
 
 @router.get("/headlines/source/{source_id}")
-def get_headlines_by_source(source_id: str, db: Session = Depends(get_db)):
+async def get_headlines_by_source(source_id: str, db: Session = Depends(get_db)):
     """
     Get news articles from the News API.
     """
@@ -240,17 +246,19 @@ def get_headlines_by_source(source_id: str, db: Session = Depends(get_db)):
     }
 
     try:
-        response = requests.get(NEWS_API_TOP_HEADLINES, params=params)
-        response.raise_for_status()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(NEWS_API_TOP_HEADLINES, params=params) as response:
+                response.raise_for_status()
+                data = await response.json()
         return get_response(
-            data=response.json(),
+            data=data,
             message=f"Top headlines for source: {source_id.lower()}",
             status=status.HTTP_200_OK,
             error=False,
             code="TOP_HEADLINES_FETCHED",
         )
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
+    except aiohttp.ClientError as e:
+        logger.error(f"ClientError: {str(e)}")
         return get_response(
             message="Failed to fetch news articles",
             status=status.HTTP_400_BAD_REQUEST,
@@ -268,7 +276,7 @@ def get_headlines_by_source(source_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/headlines/filter")
-def get_headlines_filter(source: str, country: str):
+async def get_headlines_filter(source: str, country: str):
     """
     Get news articles from the News API.
     """
@@ -279,17 +287,19 @@ def get_headlines_filter(source: str, country: str):
     }
 
     try:
-        response = requests.get(NEWS_API_TOP_HEADLINES, params=params)
-        response.raise_for_status()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(NEWS_API_TOP_HEADLINES, params=params) as response:
+                response.raise_for_status()
+                data = await response.json()
         return get_response(
-            data=response.json(),
+            data=data,
             message=f"Top headlines for country: {country.lower()}, source: {source.lower()}",
             status=status.HTTP_200_OK,
             error=False,
             code="TOP_HEADLINES_FETCHED",
         )
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
+    except aiohttp.ClientError as e:
+        logger.error(f"ClientError: {str(e)}")
         return get_response(
             message="Failed to fetch news articles",
             status=status.HTTP_400_BAD_REQUEST,
